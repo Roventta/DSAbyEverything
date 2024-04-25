@@ -8,7 +8,7 @@ int main(){
 
     //std::vector<int> result = mergeSort(a, [](int a,int b){return a>b;});
     std::array<int,2> dope = {0, (int)a.size()-1};
-    partition(&a, dope, [](int a, int b){return a>b;});
+    partition_lomuto(a, dope, [](int a, int b){return a>b;});
 
     std::cout << "partition\n";
     for(auto ele : a){std::cout << ele<<",";}
