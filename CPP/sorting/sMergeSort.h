@@ -2,42 +2,65 @@
 #include <array>
 #include <tuple>
 
-//pass result array with a size of a.size+b.size
-void mergeTwoSorted(std::vector<int> *result, std::vector<int> a, std::vector<int> b, std::array<int, 4> dope, bool (*compare) (int,int)){
-    int asize = dope[0];
-    int bsize = dope[1];
-    int aindex = dope[2];
-    int bindex = dope[3];
+#include "sVecSwap.h"
 
-    while(asize != aindex || bsize != bindex){
-        if(a[aindex] > b[bindex]){(*result)[aindex + bindex] = a[aindex]; ++aindex;}
-        else{ (*result)[aindex+bindex] = b[bindex]; ++bindex;}
+//use it when the sorted are adjacent, a is at b's left
+//dope has astart, aend, bstart, bend
+//dope in inclusive style
+void mergeTwoSorted(std::vector<int> &soil, std::array<int, 4> dope, bool (*comp) (int,int)){
+    int astart = dope[0], aend = dope[1], bstart = dope[2], bend = dope[3];
+    int asize = aend-astart+1, bsize = bend-bstart+1;
+    int aiter = 0, biter = 0;
+
+    std::vector<int> temp(asize+bsize);
+
+    while((aiter<asize) && (biter<bsize)){
+        if(comp(soil[astart+aiter], soil[bstart+biter])){
+            temp[aiter+biter] = soil[astart+aiter];
+            aiter++;
+        }
+        else{
+            temp[aiter+biter] = soil[bstart+biter];
+            biter++;
+        }
     }
-    return;
+
+    for(int i=aiter; i<asize; i++){
+        temp[i+biter] = soil[astart+i];
+    }
+    for(int i=biter; i<bsize; i++){
+        temp[aiter+i] = soil[bstart+i];
+    }
+
+    for(int i=0; i<bsize+asize; i++){
+        soil[astart + i] = temp[i];
+    }
+
 }
 
-std::vector<int> mergeSort(std::vector<int> in, bool (*compare)(int,int)){
-    std::vector<int> out;
-    if(in.size() == 2){
-        if(compare(in[0],in[1])){out.push_back(in[0]); out.push_back(in[1]);}
-        else{out.push_back(in[1]), out.push_back(in[0]);}
-        return out;
-    }
-    if(in.size() == 1){
-        out.push_back(in[0]);
-        return out;
+
+// soil and vec must have same size
+void mergeSort(std::vector<int> &vec, std::array<int, 2> dope, bool (*comp) (int,int)){
+    int low = dope[0];
+    int high = dope[1];
+    int size = high-low+1;
+
+    if(size <= 1){return;}
+    if(size == 2){
+        if(!comp(vec[low], vec[high])){qs_swap(vec, low, high);}
+        return;
     }
 
-    //split
-    std::vector<int> left(in.begin(), in.begin()+in.size()/2);
-    std::vector<int> right(in.begin()+in.size()/2, in.begin()+in.size());
-    
-    std::vector<int> left_s = mergeSort(left, compare);
-    std::vector<int> right_s = mergeSort(right, compare);
+    int pivot = size/2 + low;
+    printf("pivot %i low %i high %i\n", pivot, low, high);
+    std::array<int, 2> dope_left = {low, pivot};
+    std::array<int, 2> dope_right = {pivot+1, high};
+    std::array<int, 4> dope_merge = {low, pivot, pivot+1, high};
 
-    std::vector<int> r(left_s.size() + right_s.size());
-    std::array<int,4> dope = {(int)left_s.size(), (int)right_s.size(),0,0};
-    mergeTwoSorted(&r, left_s, right_s, dope, compare);
-    
-    return r;
+    mergeSort(vec, dope_left, comp);
+    mergeSort(vec, dope_right, comp);   
+
+    mergeTwoSorted(vec, dope_merge, comp);
+
+    return;
 }
